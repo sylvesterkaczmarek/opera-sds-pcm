@@ -1,0 +1,35 @@
+name: Validate exact regression fix
+on:
+  push:
+    branches: [validation/synchronous-futures-20260927]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: sylvesterkaczmarek/opera-sds-pcm
+          ref: 1fd928234228cad3554f2310df5077f69277cece
+          path: work
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install focused validation dependencies
+        run: |
+          python -m pip install -e work 'numpy<2' 'pytest>=7.4,<8' pytest-mock 'pytest-cov==4.0.0' 'pytest-asyncio==0.20.3' geopandas requests boto3 ruff build
+      - name: Verify executor regressions and installed wheel
+        run: python validation/verify.py work evidence
+      - name: Preserve validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: validation-opera-sds-pcm
+          path: evidence/
