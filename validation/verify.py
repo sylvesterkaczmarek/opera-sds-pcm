@@ -35,7 +35,7 @@ def run(label, cmd, expected=0, cwd=SOURCE):
 def test(label, failures=0, coverage=False, cwd=SOURCE, target=TEST):
     args = [PY, "-m", "pytest", target, "-q", "-o", "addopts=", "-o", "log_cli=false", "--junitxml", str(OUT / (label + ".xml"))]
     if coverage:
-        args += ["--cov=util.exec_util", "--cov-branch", "--cov-report=json:" + str(OUT / "coverage.json")]
+        args += ["--cov=util.exec_util", "--cov-branch", "--cov-report=term"]
     run(label, args, int(bool(failures)), cwd)
     tree = ET.parse(OUT / (label + ".xml"))
     counts = [sum(int(n.get(k, 0)) for n in tree.iter("testsuite")) for k in ["tests", "failures", "errors", "skipped"]]
@@ -45,6 +45,7 @@ def test(label, failures=0, coverage=False, cwd=SOURCE, target=TEST):
 run("dependencies", [PY, "-m", "pip", "freeze"])
 run("dependency-check", [PY, "-m", "pip", "check"])
 test("fixed", coverage=True)
+run("coverage-json", [PY, "-m", "coverage", "json", "-o", str(OUT / "coverage.json")])
 try:
     PRODUCTION.write_bytes(subprocess.check_output(["git", "show", CFG["base"] + ":util/exec_util.py"], cwd=SOURCE))
     test("original", 7)
